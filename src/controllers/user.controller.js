@@ -114,7 +114,7 @@ const refreshAccessToken = asyncHandler(async(req, res)=>{
     try {
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
     
-        const user = User.findById(decodedToken?._id)
+        const user =await User.findById(decodedToken?._id)
     
         if(!user){
             throw new ApiError(401, "invalid refresh token")
@@ -132,8 +132,8 @@ const refreshAccessToken = asyncHandler(async(req, res)=>{
         const {newAccessToken, newRefreshToken} = await generateAccessAndRefereshToken(user._id)
     
         return res.status(200)
-        .cookie("accessToken", newAccessToken)
-        .cookie("refreshToken", newRefreshToken)
+        .cookie("accessToken", newAccessToken,options)
+        .cookie("refreshToken", newRefreshToken,options)
         .json(new ApiResponse(200, {newAccessToken,newRefreshToken},"Access token refreshed"))
     } catch (error) {
         throw new ApiError(401, "invalid refresh token")
@@ -145,17 +145,31 @@ const getCurrentUser = asyncHandler(async(req, res)=>{
     .json(new ApiResponse(200, req.user, "current user fetched successfully"))
 })
 
-const updateAccountDetails = asyncHandler(async(req,res)=>{
-    const {name, email, phoneNumber} = req.body
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { name, email, phoneNumber } = req.body;
 
-    if(!name || !email || !phoneNumber ){
-        throw new ApiError(400, "All fields are required")
+    if (!name || !email || !phoneNumber) {
+        throw new ApiError(400, "All fields are required");
     }
 
-    const user = await User.findByIdAndUpdate(req.user?._id, {$set: {name, email, phoneNumber}},{new:true}).select("-password -refreshToken")
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, {
+        $set: { name, email, phoneNumber },
+        $unset: { refreshToken: "" }
+    }, { new: true }).select("-password -refreshToken");
 
-    return res.status(200)
-    .json(new ApiResponse(200, user, "Accout details updated successfully"))
-})
+    if (!updatedUser) {
+        throw new ApiError(500, "Something went wrong while updating account details");
+    }
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    res.clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options);
+
+    return res.status(200).json(new ApiResponse(200, updatedUser, "Account details updated. Please log in again."));
+});
 
 export {registerUser, loginUser, logOutUser, refreshAccessToken, getCurrentUser, updateAccountDetails}

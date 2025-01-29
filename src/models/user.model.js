@@ -6,8 +6,8 @@ const userSchema = new Schema(
     {
         name: { type: String, required: true, trim: true, index: true },
         email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-        password: { type: String, required: true },
-        phoneNumber: { type: String, required: true, unique: true},
+        password: { type: String, required: true, trim: true },
+        phoneNumber: { type: String, required: true, unique: true, trim: true},
         refreshToken: { type: String }
     },
     { timestamps: true }
@@ -30,7 +30,6 @@ userSchema.methods.generateAccessToken = function(){
             _id: this._id,
             name: this.name,
             email: this.email,
-            name: this.name,
             phoneNumber: this.phoneNumber
         },
         process.env.ACCESS_TOKEN_SECRET,

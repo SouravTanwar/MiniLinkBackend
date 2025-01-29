@@ -11,6 +11,7 @@ const linkSchema = new Schema(
         originalUrl: {
             type: String,
             required: true,
+            index: true,
         },
         shortUrl: {
             type: String,

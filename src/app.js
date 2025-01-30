@@ -19,8 +19,10 @@ app.use(device.capture());
 
 import userRouter from "./routes/user.routes.js"
 import linkRouter from "./routes/link.routes.js"
+import analyticsRouter from "./routes/analytics.routes.js"
 
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/links",linkRouter)
+app.use("/api/v1/analytics", analyticsRouter)
 
 export {app}

@@ -1,6 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
+import { Link } from "../models/link.model.js";
+import { Analytics } from "../models/analytics.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 
@@ -74,7 +76,7 @@ const loginUser = asyncHandler(async (req,res)=>{
 
     const {accessToken, refreshToken} = await generateAccessAndRefereshToken(user._id)
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken").lean()
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const options = {
         httpOnly: true,
@@ -129,12 +131,12 @@ const refreshAccessToken = asyncHandler(async(req, res)=>{
             secure: true
         }
     
-        const {newAccessToken, newRefreshToken} = await generateAccessAndRefereshToken(user._id)
+        const {accessToken, refreshToken} = await generateAccessAndRefereshToken(user._id)
     
         return res.status(200)
-        .cookie("accessToken", newAccessToken,options)
-        .cookie("refreshToken", newRefreshToken,options)
-        .json(new ApiResponse(200, {newAccessToken,newRefreshToken},"Access token refreshed"))
+        .cookie("accessToken", accessToken,options)
+        .cookie("refreshToken", refreshToken,options)
+        .json(new ApiResponse(200, {accessToken,refreshToken},"Access token refreshed"))
     } catch (error) {
         throw new ApiError(401, "invalid refresh token")
     }
@@ -172,4 +174,36 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, updatedUser, "Account details updated. Please log in again."));
 });
 
-export {registerUser, loginUser, logOutUser, refreshAccessToken, getCurrentUser, updateAccountDetails}
+const deleteUserAccount = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    
+    
+        const links = await Link.find({ user: userId });
+
+        for (const link of links) {
+            await Analytics.deleteMany({ link: link._id });
+        }
+
+        await Link.deleteMany({ user: userId });
+        
+
+
+    await user.deleteOne();
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    };
+
+    res.clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options);
+
+    return res.status(200).json(new ApiResponse(200, {}, "User account deleted successfully"));
+});
+
+export {registerUser, loginUser, logOutUser, refreshAccessToken, getCurrentUser, updateAccountDetails, deleteUserAccount}

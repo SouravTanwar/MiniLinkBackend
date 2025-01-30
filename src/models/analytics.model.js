@@ -7,28 +7,21 @@ const analyticsSchema = new Schema(
             ref: "Link",
             required: true,
         },
-        originalUrl: {
-            type: String,
-            required: true,
-        },
-        shortUrl: {
-            type: String,
-            required: true,
-        },
         ipAddress: {
             type: String,
+            required: true,
+        },
+        deviceType: {
+            type: String,
+            enum: ["mobile", "desktop", "tablet", "unknown"],
             required: true,
         },
         userAgent: {
             type: String,
             required: true,
         },
-        timestamp: {
-            type: Date,
-            default: Date.now,
-        },
     },
     { timestamps: true }
 );
 
-export const Link = mongoose.model("Analytics", analyticsSchema);
+export const Analytics = mongoose.model("Analytics", analyticsSchema);

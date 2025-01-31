@@ -14,7 +14,9 @@ app.use(express.json({limit: "12kb"}))
 app.use(express.urlencoded({extended:true, limit:"12kb"}))
 app.use(express.static("public"))
 app.use(cookieParser())
-app.use(device.capture());
+app.use(device.capture({
+    parseUserAgent: true
+}));
 
 
 import userRouter from "./routes/user.routes.js"

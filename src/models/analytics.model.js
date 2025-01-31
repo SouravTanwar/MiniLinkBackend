@@ -13,7 +13,7 @@ const analyticsSchema = new Schema(
         },
         deviceType: {
             type: String,
-            enum: ["mobile", "desktop", "tablet", "unknown"],
+            enum: ["phone", "desktop", "tablet", "unknown"],
             required: true,
         },
         userAgent: {

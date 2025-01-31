@@ -8,7 +8,23 @@ import { Link } from "../models/link.model.js";
 const trackAnalytics = asyncHandler(async (req, res, next) => {
     const { shortLink } = req.params;
     const ipAddress = req.ip || req.headers["x-forwarded-for"] || "unknown";
-    const userAgent = req.get("User-Agent") || "unknown";
+    let userAgent = req.get("User-Agent") || "unknown";
+    // Update user agent with specific details
+    if (/Android/i.test(userAgent)) {
+        userAgent = 'Android';
+    } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        userAgent = 'iOS';
+    } else if (/Chrome/i.test(userAgent)) {
+        userAgent = 'Chrome';
+    } else if (/Safari/i.test(userAgent) && !/Chrome/i.test(userAgent)) {
+        userAgent = 'Safari';
+    } else if (/Firefox/i.test(userAgent)) {
+        userAgent = 'Firefox';
+    } else if (/Edge/i.test(userAgent)) {
+        userAgent = 'Edge';
+    } else if (/MSIE|Trident/i.test(userAgent)) {
+        userAgent = 'Internet Explorer';
+    }
     const deviceType = req.device.type || "unknown";
 
     const link = await Link.findOne({ shortLink });

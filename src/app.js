@@ -5,8 +5,10 @@ import device from "express-device"
 
 const app = express()
 
+const corsOrigins = process.env.CORS_ORIGIN.split(",");
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: corsOrigins,
     credentials:true
 }))
 

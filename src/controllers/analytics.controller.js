@@ -49,12 +49,18 @@ const getAnalytics = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.user._id;
 
+    const options = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { createdAt: -1 }, 
+    };
+
     // Fetch all links belonging to the user
     const userLinks = await Link.find({ user: userId }).select("_id shortLink originalLink");
     const linkIds = userLinks.map((link) => link._id);
 
-    // Fetch analytics for these links
-    const analyticsData = await Analytics.aggregate([
+    // Define the aggregation pipeline
+    const analyticsPipeline = Analytics.aggregate([
         { $match: { link: { $in: linkIds } } },
         { $lookup: {
             from: "links",
@@ -63,9 +69,6 @@ const getAnalytics = asyncHandler(async (req, res) => {
             as: "linkDetails"
         }},
         { $unwind: "$linkDetails" },
-        { $sort: { createdAt: -1 } },
-        { $skip: (page - 1) * limit },
-        { $limit: parseInt(limit) },
         { $project: {
             _id: 1,
             ipAddress: 1,
@@ -76,6 +79,9 @@ const getAnalytics = asyncHandler(async (req, res) => {
             originalLink: "$linkDetails.originalLink"
         }}
     ]);
+
+    // Apply pagination using aggregatePaginate
+    const analyticsData = await Analytics.aggregatePaginate(analyticsPipeline, options);
 
     return res.status(200).json(new ApiResponse(200, analyticsData, "Analytics retrieved successfully"));
 });
@@ -91,13 +97,30 @@ const getDateWiseClicks = asyncHandler(async (req, res) => {
         { $match: { link: { $in: linkIds } } },
         { $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, 
-            totalClicks: { $sum: 1 }
+            dailyClicks: { $sum: 1 }
         }},
         { $sort: { _id: 1 } },
+        {
+            $setWindowFields: {
+                partitionBy: null,
+                sortBy: { _id: 1 },
+                output: {
+                    cumulativeTotal: {
+                        $sum: "$dailyClicks",
+                        window: {
+                            documents: ["unbounded", "current"]
+                        }
+                    }
+                }
+            }
+        }
     ]);
 
     return res.status(200).json(new ApiResponse(200, dateWiseClicks, "Date-wise clicks retrieved successfully"));
 });
+
+
+
 
 // 📌 Get **device-wise total clicks** (Mobile, Desktop, Tablet)
 const getDeviceWiseClicks = asyncHandler(async (req, res) => {

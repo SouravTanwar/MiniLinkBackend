@@ -80,7 +80,8 @@ const loginUser = asyncHandler(async (req,res)=>{
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'None',
     }
 
     return res.status(200)
@@ -96,7 +97,8 @@ const logOutUser = asyncHandler(async (req,res)=> {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'None',
     }
 
     return res.status(200)
@@ -128,7 +130,8 @@ const refreshAccessToken = asyncHandler(async(req, res)=>{
     
         const options = {
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite: 'None',
         }
     
         const {accessToken, refreshToken} = await generateAccessAndRefereshToken(user._id)
@@ -165,7 +168,8 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'None',
     }
 
     res.clearCookie("accessToken", options)
@@ -197,7 +201,8 @@ const deleteUserAccount = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'None',
     };
 
     res.clearCookie("accessToken", options)

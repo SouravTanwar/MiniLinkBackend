@@ -5,7 +5,7 @@ import { Link } from "../models/link.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Analytics } from "../models/analytics.model.js"; 
 
-// Function to generate a unique short link
+
 const generateShortLink = async (originalLink, userId) => {
     const randomComponent = crypto.randomBytes(3).toString("hex");
     const uniqueString = `${originalLink}-${userId}-${randomComponent}-${Date.now()}`;
@@ -14,7 +14,7 @@ const generateShortLink = async (originalLink, userId) => {
     return parseInt(hash.slice(0, 10), 16).toString(36).substring(0, 8);
 };
 
-// Create a new shortened link
+
 const createLink = asyncHandler(async (req, res) => {
     const { originalLink, remarks, expirationDate } = req.body;
     const userId = req.user._id;
@@ -41,7 +41,7 @@ const createLink = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(201, { shortLink }, "Link created successfully"));
 });
 
-// Get all links for the current user with pagination
+
 const getUserLinks = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.user._id;
@@ -60,7 +60,7 @@ const getUserLinks = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, links, "Links retrieved successfully"));
 });
 
-// Redirect to the original link and increment click count
+
 const redirectLink = asyncHandler(async (req, res) => {
     const link = await Link.findOne({ shortLink: req.params.shortLink });
 
@@ -71,14 +71,14 @@ const redirectLink = asyncHandler(async (req, res) => {
         throw new ApiError(403, "Link is inactive and cannot be redirected");
     }
 
-    // Increment click count
+
     link.clicks += 1;
     await link.save();
 
     return res.redirect(link.originalLink);
 });
 
-// Update an existing link
+
 const updateLink = asyncHandler(async (req, res) => {
     const { originalLink, remarks, expirationDate, status } = req.body;
     const userId = req.user._id;
@@ -102,7 +102,7 @@ const updateLink = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, updatedLink, "Link updated successfully"));
 });
 
-// Delete a link and its associated analytics
+
 const deleteLink = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const deletedLink = await Link.findOneAndDelete({ _id: req.params.id, user: userId });
@@ -111,7 +111,7 @@ const deleteLink = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Link not found or unauthorized");
     }
 
-    // Delete associated analytics
+
     await Analytics.deleteMany({ link: deletedLink._id });
 
     return res.status(200).json(new ApiResponse(200, {}, "Link and associated analytics deleted successfully"));

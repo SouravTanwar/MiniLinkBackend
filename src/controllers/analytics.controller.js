@@ -4,12 +4,12 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Analytics } from "../models/analytics.model.js";
 import { Link } from "../models/link.model.js";
 
-// 📌 Middleware to capture analytics when a link is accessed
+
 const trackAnalytics = asyncHandler(async (req, res, next) => {
     const { shortLink } = req.params;
     const ipAddress = req.ip || req.headers["x-forwarded-for"] || "unknown";
     let userAgent = req.get("User-Agent") || "unknown";
-    // Update user agent with specific details
+
     if (/Android/i.test(userAgent)) {
         userAgent = 'Android';
     } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
@@ -33,7 +33,7 @@ const trackAnalytics = asyncHandler(async (req, res, next) => {
         throw new ApiError(404, "Short link not found");
     }
 
-    // Save analytics data
+
     await Analytics.create({
         link: link._id,
         ipAddress,
@@ -44,7 +44,7 @@ const trackAnalytics = asyncHandler(async (req, res, next) => {
     next();
 });
 
-// 📌 Get analytics for a user's links with pagination
+
 const getAnalytics = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.user._id;
@@ -55,11 +55,9 @@ const getAnalytics = asyncHandler(async (req, res) => {
         sort: { createdAt: -1 }, 
     };
 
-    // Fetch all links belonging to the user
     const userLinks = await Link.find({ user: userId }).select("_id shortLink originalLink");
     const linkIds = userLinks.map((link) => link._id);
 
-    // Define the aggregation pipeline
     const analyticsPipeline = Analytics.aggregate([
         { $match: { link: { $in: linkIds } } },
         { $lookup: {
@@ -80,13 +78,11 @@ const getAnalytics = asyncHandler(async (req, res) => {
         }}
     ]);
 
-    // Apply pagination using aggregatePaginate
     const analyticsData = await Analytics.aggregatePaginate(analyticsPipeline, options);
 
     return res.status(200).json(new ApiResponse(200, analyticsData, "Analytics retrieved successfully"));
 });
 
-// 📌 Get **date-wise cumulative total clicks** for all links
 const getDateWiseClicks = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
@@ -121,8 +117,6 @@ const getDateWiseClicks = asyncHandler(async (req, res) => {
 
 
 
-
-// 📌 Get **device-wise total clicks** (Mobile, Desktop, Tablet)
 const getDeviceWiseClicks = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
@@ -141,23 +135,10 @@ const getDeviceWiseClicks = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, deviceClicks, "Device-wise clicks retrieved successfully"));
 });
 
-// 📌 Delete analytics when a link is deleted
-const deleteAnalyticsByLink = asyncHandler(async (req, res) => {
-    const { linkId } = req.params;
-
-    const deletedAnalytics = await Analytics.deleteMany({ link: linkId });
-
-    if (!deletedAnalytics.deletedCount) {
-        throw new ApiError(404, "No analytics data found for this link");
-    }
-
-    return res.status(200).json(new ApiResponse(200, {}, "Analytics deleted successfully"));
-});
 
 export { 
     trackAnalytics, 
     getAnalytics, 
     getDateWiseClicks, 
-    getDeviceWiseClicks, 
-    deleteAnalyticsByLink 
+    getDeviceWiseClicks
 };

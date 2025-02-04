@@ -11,6 +11,8 @@ app.use(cors({
     origin: corsOrigins,
     credentials:true
 }))
+app.set("trust proxy", true);
+
 
 app.use(express.json({limit: "12kb"}))
 app.use(express.urlencoded({extended:true, limit:"12kb"}))

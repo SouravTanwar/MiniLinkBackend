@@ -7,7 +7,7 @@ import { Link } from "../models/link.model.js";
 
 const trackAnalytics = asyncHandler(async (req, res, next) => {
     const { shortLink } = req.params;
-    const ipAddress = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const ipAddress = req.headers["x-forwarded-for"]?.split(",")[0] || req.connection?.remoteAddress || req.socket?.remoteAddress || req.ip || "unknown";
     let userAgent = req.get("User-Agent") || "unknown";
 
     if (/Android/i.test(userAgent)) {

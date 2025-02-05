@@ -157,6 +157,13 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required");
     }
 
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const emailChanged = user.email !== email;
+
     const updatedUser = await User.findByIdAndUpdate(req.user._id, {
         $set: { name, email, phoneNumber },
         $unset: { refreshToken: "" }
@@ -166,17 +173,20 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Something went wrong while updating account details");
     }
 
-    const options = {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'None',
+    if (emailChanged) {
+        const options = {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None',
+        };
+
+        res.clearCookie("accessToken", options)
+            .clearCookie("refreshToken", options);
     }
 
-    res.clearCookie("accessToken", options)
-        .clearCookie("refreshToken", options);
-
-    return res.status(200).json(new ApiResponse(200, updatedUser, "Account details updated. Please log in again."));
+    return res.status(200).json(new ApiResponse(200, updatedUser, emailChanged ? "Account details updated. Please log in again." : "Account details updated."));
 });
+
 
 const deleteUserAccount = asyncHandler(async (req, res) => {
     const userId = req.user._id;
